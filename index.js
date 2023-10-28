@@ -31,6 +31,7 @@ async function run() {
     const brandCollection = client.db('productDB').collection('brand');
     const userCollection = client.db('productDB').collection('user');
     const newsletterCollection = client.db('productDB').collection('newsletter');
+    const bookingCollection = client.db('productDB').collection('bookings');
 
     
     //for add products
@@ -46,32 +47,83 @@ async function run() {
       res.send(result)
     })
 
-  //   app.get('/product/:id', async(req, res) =>{
-  //     const id = req.params.id;
-  //     const query = {_id: new ObjectId(id)}
-  //     const result = await productCollection.findOne(query)
-  //     res.send(result)
-  // })
-
-    app.put('/product/:id', async(req, res) =>{
-        const id = req.params.id;
-        const filter = {_id: new ObjectId(id)}
-        const options = {upsert:true}
-        const updatedProduct = req.body;
-        const product = {
-            $set: {
-                name: updatedProduct.name,
-                brand: updatedProduct.brand,
-                type: updatedProduct.type,
-                price: updatedProduct.price,
-                rating: updatedProduct.rating,
-                photo: updatedProduct.photo,
-                description: updatedProduct.description,
-            }
-        }
-        const result = await productCollection.updateOne(filter, product, options)
-        res.send(result)
+    //for detail API
+    app.get('/product/:id', async(req,res) =>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await productCollection.findOne(query)
+      res.send(result)
     })
+
+    // for update API
+    app.get('/product/:id', async(req,res) =>{
+      const id = req.params.id;
+      const found = {_id: new ObjectId(id)}
+      const result = await productCollection.findOne(found)
+      res.send(result)
+    })
+
+
+    
+    app.put('/product/:id', async(req, res) =>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)}
+      const options = {upsert:true}
+      const updatedProduct = req.body;
+      const product = {
+          $set: {
+              name: updatedProduct.name,
+              brand: updatedProduct.brand,
+              type: updatedProduct.type,
+              price: updatedProduct.price,
+              rating: updatedProduct.rating,
+              photo: updatedProduct.photo,
+              description: updatedProduct.description,
+          }
+      }
+      const result = await productCollection.updateOne(filter, product, options)
+      res.send(result)
+  })
+
+    //get place order API
+    app.get('/product/:id', async(req,res) =>{
+      const id= req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const options = {
+        projection: {name: 1, photo: 1, price: 1},
+      }
+      const result = await productCollection.findOne(query, options)
+      res.send(result)
+    })
+
+    // product booking related API
+
+    app.get('/bookings', async(req, res) =>{
+      console.log(req.query)
+      let query={}
+      if(req.query?.email){
+        query = {email: req.query.email}
+      }
+      const result = await bookingCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    app.post('/bookings', async(req, res) =>{
+      const orders = req.body;
+      console.log(orders)
+      const result = await bookingCollection.insertOne(orders)
+      res.send(result)
+    })
+
+    app.delete('/bookings/:id', async(req, res) =>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await bookingCollection.deleteOne(query)
+      res.send(result)
+    })
+
+
+
     // for the brand adidas
     app.get('/product/adidas', async(req,res) =>{
       const cursor = productCollection.find( {brand : 'Adidas'} );
